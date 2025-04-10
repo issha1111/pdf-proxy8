@@ -1,22 +1,27 @@
-export default async function handler(req, res) {
+import https from "https";
+import http from "http";
+
+export default function handler(req, res) {
   const { url } = req.query;
 
   if (!url) {
-    return res.status(400).send('Missing PDF URL');
+    return res.status(400).send("Missing PDF URL");
   }
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error('Failed to fetch PDF');
+  const client = url.startsWith("https") ? https : http;
+
+  client.get(url, (streamRes) => {
+    if (streamRes.statusCode !== 200) {
+      res.status(streamRes.statusCode).send("Failed to fetch PDF");
+      return;
     }
 
-    const buffer = await response.arrayBuffer();
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", 'inline; filename="document.pdf"');
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="document.pdf"');
-    res.send(Buffer.from(buffer));
-  } catch (err) {
-    res.status(500).send('Error fetching or displaying PDF');
-  }
+    streamRes.pipe(res);
+  }).on("error", (err) => {
+    console.error(err);
+    res.status(500).send("Error fetching PDF");
+  });
 }
