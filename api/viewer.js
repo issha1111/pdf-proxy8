@@ -17,13 +17,17 @@ export default async function handler(req, res) {
     const arrayBuffer = await pdfRes.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", 'inline; filename="document.pdf"');
-    res.setHeader("Content-Length", buffer.length);
+    res.writeHead(200, {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="document.pdf"',
+      'Content-Length': buffer.length,
+      'Accept-Ranges': 'bytes',
+      'Cache-Control': 'no-store',
+    });
 
     res.end(buffer);
   } catch (error) {
-    console.error(error);
+    console.error("PDF proxy error:", error);
     res.status(500).send("Internal Server Error");
   }
 }
