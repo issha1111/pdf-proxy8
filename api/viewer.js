@@ -11,10 +11,11 @@ export default async function handler(req, res) {
       throw new Error('Failed to fetch PDF');
     }
 
+    const buffer = await response.arrayBuffer();
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="document.pdf"');
-
-    response.body.pipe(res);
+    res.send(Buffer.from(buffer));
   } catch (err) {
     res.status(500).send('Error fetching or displaying PDF');
   }
